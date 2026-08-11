@@ -1,0 +1,26 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MY AOV</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box}body{margin:0;background:#0b0c10;color:#f5f6fa;font-family:'Be Vietnam Pro',sans-serif}
+header{position:sticky;top:0;background:#0b0c10e8;backdrop-filter:blur(14px);border-bottom:1px solid #292d37;z-index:5}
+.nav{max-width:900px;margin:auto;padding:15px 18px;display:flex;justify-content:space-between;align-items:center}.logo{font-weight:800;font-size:21px}
+button{cursor:pointer;border:0}.menu{background:#191c23;color:#fff;border:1px solid #303540;border-radius:13px;padding:11px 14px;font-size:20px}
+main{max-width:900px;margin:auto;padding:35px 18px 70px}.hero{text-align:center;padding:20px 0 30px}
+.avatar{width:105px;height:105px;border-radius:50%;background:#222b45;border:2px solid #7787aa;display:grid;place-items:center;margin:auto;font-size:42px}
+.badge{display:inline-block;margin-top:15px;padding:7px 17px;border:1px solid #3d414c;border-radius:999px;color:#aeb3c2;font-size:11px;letter-spacing:2px}.hero h1{font-size:46px;margin:15px 0 5px}.hero p{color:#aeb3c2}
+.section{margin-top:34px}.section h2{font-size:26px}.card{display:flex;gap:15px;align-items:center;background:#17191f;border:1px solid #30343e;border-radius:20px;padding:16px;margin:12px 0}.icon{width:58px;height:58px;border-radius:16px;background:#21345a;display:grid;place-items:center;font-size:25px}.info{flex:1}.info b{font-size:16px}.info p{color:#969cab;font-size:12px;margin:6px 0}.tag{display:inline-block;border:1px solid #3d67a5;color:#75a9ff;border-radius:99px;padding:4px 8px;font-size:10px}.btn{background:linear-gradient(135deg,#3970ff,#6352ff);color:white;border-radius:12px;padding:11px 14px;font-weight:700}.empty{color:#858b99;border:1px dashed #343945;border-radius:18px;padding:25px;text-align:center}
+@media(max-width:520px){.hero h1{font-size:38px}.card{padding:13px}.btn{padding:10px;font-size:12px}}
+</style></head><body>
+<header><div class="nav"><div class="logo">MY AOV</div><button class="menu" onclick="toggleMenu()">☰</button><div id="navMenu" style="display:none;position:absolute;right:18px;top:62px;background:#17191f;border:1px solid #30343e;border-radius:14px;padding:10px"><a href="#products" style="display:block;color:white;padding:8px;text-decoration:none">Sản phẩm</a><a href="#keys" style="display:block;color:white;padding:8px;text-decoration:none">Get Key</a><a href="/admin.html" style="display:block;color:white;padding:8px;text-decoration:none">Admin</a></div></div></header>
+<main><section class="hero"><div class="avatar">⚡</div><div class="badge">DEVELOPER</div><h1>MY AOV</h1><p>Developer & Web Creator</p></section>
+<section class="section" id="products"><h2>🎮 Sản phẩm</h2><div id="products"></div></section>
+<section class="section" id="keys"><h2>🔑 Get Key</h2><div class="card"><div class="icon">🔑</div><div class="info"><b>Key Demo 24H</b><p>Hệ thống key mẫu cho website</p></div><button class="btn" onclick="getKey()">Lấy key</button></div></section>
+</main><script>
+function toggleMenu(){let x=document.getElementById('navMenu');x.style.display=x.style.display==='block'?'none':'block'}
+async function load(){try{let r=await fetch('/api/products');let a=await r.json();let el=document.getElementById('products');el.innerHTML=a.length?a.map(p=>`<div class="card"><div class="icon">${p.platform==='iOS'?'':'🤖'}</div><div class="info"><b>${esc(p.name)}</b><p>${esc(p.version)} · <span class="tag">${esc(p.platform)}</span></p></div>${p.link&&p.link!=='#'?`<a class="btn" href="${esc(p.link)}">Tải</a>`:''}</div>`).join(''):'<div class="empty">Chưa có sản phẩm.</div>'}catch(e){document.getElementById('products').innerHTML='<div class="empty">Không kết nối được máy chủ.</div>'}}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+async function getKey(){let r=await fetch('/api/key',{method:'POST'});let d=await r.json();alert(d.key+'\\nHạn: '+d.expiresAt)}
+load();
+</script></body></html>

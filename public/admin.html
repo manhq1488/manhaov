@@ -1,0 +1,46 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MY AOV Admin v2</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}body{margin:0;background:#0b0c10;color:#f5f6fa;font-family:'Be Vietnam Pro',sans-serif}.wrap{max-width:1050px;margin:auto;padding:28px 18px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}h1{font-size:30px}.muted{color:#9ca2b0;font-size:13px}.panel{background:#17191f;border:1px solid #30343e;border-radius:20px;padding:18px;margin-top:20px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:#111319;border:1px solid #2b2f38;border-radius:15px;padding:16px}.stat b{display:block;font-size:25px;margin-top:5px}.row{display:grid;grid-template-columns:1.3fr 120px 100px 1fr 120px;gap:8px;margin:9px 0;align-items:center}.input,select{background:#0f1116;color:#fff;border:1px solid #30343e;border-radius:10px;padding:10px}.btn{background:linear-gradient(135deg,#3970ff,#6352ff);color:#fff;border:0;border-radius:11px;padding:10px 13px;font-weight:700}.danger{background:#452028}.login{max-width:400px;margin:12vh auto}.login input{display:block;width:100%;margin:10px 0}.hidden{display:none}.key{padding:12px;background:#101218;border:1px solid #2c3039;border-radius:12px;margin:8px 0;display:flex;justify-content:space-between;gap:10px}.login-msg{color:#ff818b;margin-top:10px}@media(max-width:750px){.row{grid-template-columns:1fr 1fr}.row .wide{grid-column:1/-1}.stats{grid-template-columns:1fr 1fr}}</style></head><body>
+<div id="login" class="login panel"><h1>MY AOV Admin</h1><p class="muted">Đăng nhập quản trị</p><input id="u" class="input" placeholder="Tài khoản"><input id="p" class="input" type="password" placeholder="Mật khẩu"><button class="btn" style="width:100%" onclick="login()">Đăng nhập</button><div id="msg" class="login-msg"></div></div>
+<div id="app" class="wrap hidden"><div class="top"><div><h1>Dashboard</h1><div class="muted">Quản lý website MY AOV</div></div><div><button class="btn" onclick="add()">＋ Thêm sản phẩm</button> <button class="btn danger" onclick="logout()">Đăng xuất</button></div></div>
+<div class="stats"><div class="stat">Sản phẩm<b id="sc">0</b></div><div class="stat">Key<b id="kc">0</b></div><div class="stat">Key còn hạn<b id="ak">0</b></div></div>
+<div class="panel"><h2>📦 Sản phẩm</h2>
+<input id="search" class="input" style="width:100%;margin:10px 0" placeholder="Tìm sản phẩm..." oninput="loadProducts()">
+<div id="list"></div></div>
+<div class="panel"><h2>🔑 Quản lý Key</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+<select id="hours" class="input"><option value="1">1 giờ</option><option value="24" selected>24 giờ</option><option value="72">3 ngày</option><option value="168">7 ngày</option><option value="720">30 ngày</option></select>
+<button class="btn" onclick="makeKey()">＋ Tạo key</button> <button class="btn danger" onclick="cleanup()">Dọn key hết hạn</button></div>
+<div id="keys" style="margin-top:12px"></div></div></div>
+<script>
+async function api(url,opt={}){let r=await fetch(url,opt);let d=await r.json();if(!r.ok)throw new Error(d.error||'Lỗi');return d}
+async function check(){let d=await api('/api/me');if(d.admin)show();else document.getElementById('login').classList.remove('hidden')}
+function show(){document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');load()}
+async function login(){try{await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u.value,password:p.value})});show()}catch(e){msg.textContent=e.message}}
+async function logout(){await api('/api/logout',{method:'POST'});location.reload()}
+async function load(){
+ await loadProducts();
+ let k=await api('/api/keys');
+ kc.textContent=k.length;
+ ak.textContent=k.filter(x=>new Date(x.expires_at)>new Date()).length;
+ renderKeys(k);
+}
+async function loadProducts(){
+ let q=(document.getElementById('search')?.value||'').toLowerCase().trim();
+ let a=await api('/api/admin/products');
+ if(q)a=a.filter(x=>(x.name+' '+x.platform+' '+x.version).toLowerCase().includes(q));
+ sc.textContent=a.length;
+ list.innerHTML=a.map(x=>`<div class="row"><input class="input wide" id="n${x.id}" value="${esc(x.name)}"><select id="p${x.id}"><option ${x.platform==='iOS'?'selected':''}>iOS</option><option ${x.platform==='Android'?'selected':''}>Android</option><option ${x.platform==='Windows'?'selected':''}>Windows</option></select><input class="input" id="v${x.id}" value="${esc(x.version)}"><input class="input wide" id="l${x.id}" value="${esc(x.link)}"><span><button class="btn" onclick="save(${x.id})">Lưu</button> <button class="btn danger" onclick="del(${x.id})">Xóa</button></span></div>`).join('')||'<p class="muted">Không có sản phẩm.</p>';
+}
+function renderKeys(k){
+ keys.innerHTML=k.slice(0,50).map(x=>{
+ const expired=new Date(x.expires_at)<=new Date();
+ return `<div class="key"><div><b>${esc(x.key)}</b><div class="muted">${expired?'ĐÃ HẾT HẠN':'Còn hạn'} · ${new Date(x.expires_at).toLocaleString('vi-VN')}</div></div><button class="btn danger" onclick="revoke(${x.id})">Thu hồi</button></div>`;
+ }).join('')||'<p class="muted">Chưa có key.</p>';
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+async function add(){let name=prompt('Tên sản phẩm?');if(!name)return;await api('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,platform:'iOS',version:'V1.0',link:'#'})});load()}
+async function save(id){await api('/api/products/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('n'+id).value,platform:document.getElementById('p'+id).value,version:document.getElementById('v'+id).value,link:document.getElementById('l'+id).value})});load()}
+async function del(id){if(confirm('Xóa sản phẩm này?')){await api('/api/products/'+id,{method:'DELETE'});load()}}
+async function makeKey(){let x=await api('/api/key',{method:'POST'});alert('Key: '+x.key+'\\nHạn: '+new Date(x.expiresAt).toLocaleString('vi-VN'));load()}
+check();
+</script></body></html>
