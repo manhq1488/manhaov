@@ -1,11 +1,11 @@
-# MY AOV v2
+# MANH AOV 
 
 Bản này nâng cấp từ bản demo:
 - Website public đọc sản phẩm từ backend.
 - Admin có đăng nhập session.
 - CRUD sản phẩm.
 - Bật/tắt sản phẩm bằng API.
-- SQLite database (`my_aov.db`) tự tạo.
+- SQLite database (`manh_aov.db`) tự tạo.
 - Tạo key 24 giờ.
 - Xem key trong Admin.
 - Responsive mobile.
